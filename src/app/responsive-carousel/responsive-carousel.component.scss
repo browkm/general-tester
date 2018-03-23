@@ -1,0 +1,108 @@
+@import "~bootstrap/scss/functions";
+@import "~bootstrap/scss/variables";
+@import "~bootstrap/scss/mixins";
+
+$responsive-carousel-control-prev-icon-bg-light:     str-replace(url("data:image/svg+xml;charset=utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='#{$light}' viewBox='0 0 8 8'%3E%3Cpath d='M5.25 0l-4 4 4 4 1.5-1.5-2.5-2.5 2.5-2.5-1.5-1.5z'/%3E%3C/svg%3E"), "#", "%23");
+$responsive-carousel-control-next-icon-bg-light:     str-replace(url("data:image/svg+xml;charset=utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='#{$light}' viewBox='0 0 8 8'%3E%3Cpath d='M2.75 0l-1.5 1.5 2.5 2.5-2.5 2.5 1.5 1.5 4-4-4-4z'/%3E%3C/svg%3E"), "#", "%23");
+
+$responsive-carousel-control-prev-icon-bg-dark:     str-replace(url("data:image/svg+xml;charset=utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='#{$dark}' viewBox='0 0 8 8'%3E%3Cpath d='M5.25 0l-4 4 4 4 1.5-1.5-2.5-2.5 2.5-2.5-1.5-1.5z'/%3E%3C/svg%3E"), "#", "%23");
+$responsive-carousel-control-next-icon-bg-dark:     str-replace(url("data:image/svg+xml;charset=utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='#{$dark}' viewBox='0 0 8 8'%3E%3Cpath d='M2.75 0l-1.5 1.5 2.5 2.5-2.5 2.5 1.5 1.5 4-4-4-4z'/%3E%3C/svg%3E"), "#", "%23");
+
+@mixin make-responsive-carousel($gutter: $grid-gutter-width, $breakpoints: $grid-breakpoints) {
+    // Common properties for all breakpoints
+    %responsive-carousel {
+        position: relative;
+    }
+
+    @each $breakpoint in map-keys($breakpoints) {
+        $infix: breakpoint-infix($breakpoint, $breakpoints);
+
+        .responsive-carousel#{$infix} {
+            @extend %responsive-carousel;
+        }
+
+        @if not ($infix == "") {
+            @include media-breakpoint-up($breakpoint, $breakpoints) {
+                // Provide basic `.col-{bp}` classes for equal-width flexbox columns
+                .responsive-carousel#{$infix} {
+                    margin-left: -$gutter;
+                    margin-right: -$gutter;
+                    padding-left: ($gutter / 2);
+                    padding-right: ($gutter / 2);
+                }
+            }
+        }
+    }
+}
+
+@include make-responsive-carousel();
+
+.responsive-carousel-inner {
+    position: relative;
+    width: 100%;
+    overflow: hidden;
+}
+
+.responsive-carousel-inner > * {
+    display: inline-block;
+    float: none;
+    white-space: normal;
+}
+
+.responsive-carousel-control-prev,
+.responsive-carousel-control-next {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    // Use flex for alignment (1-3)
+    display: flex; // 1. allow flex styles
+    align-items: center; // 2. vertically center contents
+    justify-content: center; // 3. horizontally center contents
+    text-align: center;
+    opacity: $carousel-control-opacity;
+    // We can't have a transition here because WebKit cancels the carousel
+    // animation if you trip this while in the middle of another animation.
+
+    // Hover/focus state
+    @include hover-focus {
+        color: $carousel-control-color;
+        text-decoration: none;
+        outline: 0;
+        opacity: .9;
+    }
+}
+.responsive-carousel-control-prev {
+    left: 0;
+    @if $enable-gradients {
+        background: linear-gradient(90deg, rgba(0, 0, 0, .25), rgba(0, 0, 0, .001));
+    }
+}
+.responsive-carousel-control-next {
+    right: 0;
+    @if $enable-gradients {
+        background: linear-gradient(270deg, rgba(0, 0, 0, .25), rgba(0, 0, 0, .001));
+    }
+}
+
+// Icons for within
+.responsive-carousel-control-prev-icon,
+.responsive-carousel-control-next-icon {
+    display: inline-block;
+    width: $carousel-control-icon-width;
+    height: $carousel-control-icon-width;
+    background: transparent no-repeat center center;
+    background-size: 100% 100%;
+}
+
+.responsive-carousel-control-prev-icon.light {
+    background-image: $responsive-carousel-control-prev-icon-bg-light;
+}
+.responsive-carousel-control-next-icon.light {
+    background-image: $responsive-carousel-control-next-icon-bg-light;
+}
+.responsive-carousel-control-prev-icon.dark {
+    background-image: $responsive-carousel-control-prev-icon-bg-dark;
+}
+.responsive-carousel-control-next-icon.dark {
+    background-image: $responsive-carousel-control-next-icon-bg-dark;
+}

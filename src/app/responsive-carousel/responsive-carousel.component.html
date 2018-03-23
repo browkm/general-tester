@@ -1,0 +1,15 @@
+<div class="responsive-carousel-md responsive-carousel">
+    <div class="carousel-inner" #scroller>
+        <div *ngFor="let slide of slides" class="carousel-item col-md-4 col-sm-6 h-100 d-block">
+            <ng-template [ngTemplateOutlet]="slide.templateRef"></ng-template>
+        </div>
+    </div>
+    <a *ngIf="canScroll" class="responsive-carousel-control-prev" role="button" (click)="prev()">
+        <span class="responsive-carousel-control-prev-icon dark" aria-hidden="true"></span>
+        <span class="sr-only">Previous</span>
+    </a>
+    <a *ngIf="canScroll" class="responsive-carousel-control-next" role="button" (click)="next()">
+        <span class="responsive-carousel-control-next-icon dark" aria-hidden="true"></span>
+        <span class="sr-only">Next</span>
+    </a>
+</div>
