@@ -1,6 +1,6 @@
 <div class="responsive-carousel-md responsive-carousel">
     <div class="carousel-inner" #scroller>
-        <div *ngFor="let slide of slides" class="carousel-item col-md-4 col-sm-6 h-100 d-block">
+        <div *ngFor="let slide of slides" class="carousel-item col-md-4 col-sm-6 h-100">
             <ng-template [ngTemplateOutlet]="slide.templateRef"></ng-template>
         </div>
     </div>

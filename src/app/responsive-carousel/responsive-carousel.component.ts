@@ -31,8 +31,10 @@ export class ResponsiveCarouselComponent implements OnInit, AfterContentChecked,
         let childIndex = 0;
         while (childrenWidth < this.scrollerViewWidth
             && childIndex < ele.children.length) {
-            if (childIndex > 0) {
-                this.positionSlide(ele.children[childIndex], childIndex);
+            if (childIndex === 0) {
+                this.addActive(ele.children[childIndex]);
+            } else {
+                this.addNext(ele.children[childIndex], childIndex);
             }
             childrenWidth += ele.children[childIndex].clientWidth;
             childIndex++;
@@ -42,79 +44,124 @@ export class ResponsiveCarouselComponent implements OnInit, AfterContentChecked,
 
         // remove active class from other children
         for (; childIndex < ele.children.length; childIndex++) {
-            this.positionSlide(ele.children[childIndex], childIndex);
+            this.clearSyling(ele.children[childIndex]);
         }
     }
 
-    private activateSlide(el: any, indexOffset: number = 0) {
-        if (indexOffset > 0) {
-            this.positionSlide(el, indexOffset);
-        }
-        // this.renderer.addClass(el, 'active');
+    private addActive(el: any) {
+        this.renderer.addClass(el, 'active');
     }
 
-    private hideSlide(el: any) {
-        // this.renderer.removeClass(el, 'active');
+    private removeActive(el: any) {
+        this.renderer.removeClass(el, 'active');
     }
 
-    private removeStyle(el: any) {
+    private block(el: any) {
+        this.renderer.setStyle(el, 'display', 'block');
+        this.renderer.setStyle(el, 'position', 'absolute');
+        this.renderer.setStyle(el, 'top', 0);
+    }
+
+    private unBlock(el: any) {
+        this.renderer.removeStyle(el, 'display');
+        this.renderer.removeStyle(el, 'position');
+        this.renderer.removeStyle(el, 'top');
+    }
+
+    private addNext(el: any, index: number = 0) {
+        this.block(el);
+        this.renderer.setStyle(el, 'left', (index * el.clientWidth).toString() + 'px');
+    }
+
+    private addPrev(el: any, index: number = 0) {
+        this.block(el);
+        this.renderer.setStyle(el, 'left', (-1 * index * el.clientWidth).toString() + 'px');
+    }
+
+    private clearSyling(el: any) {
         this.renderer.removeAttribute(el, 'style');
     }
 
-    private positionSlide(el: any, indexOffset: number) {
-        this.renderer.setStyle(el, 'position', 'absolute');
-        this.renderer.setStyle(el, 'top', '0');
-        this.renderer.setStyle(el, 'left', indexOffset * el.clientWidth + 'px');
+    private transitionSlide(el: any, indexOffset: number) {
+        this.renderer.setStyle(el, 'transform', 'translateX(' + (indexOffset * 100) + '%)');
     }
-
-    // private transitionSlide(el: any, indexOffset: number) {
-    //     this.renderer.setStyle(el, 'transform', 'translateX(' + (indexOffset * 100) + '%)');
-    // }
 
     private slide(direction: string) {
         const ele = this.scrollerEl.nativeElement;
-        const activeElements = ele.querySelectorAll('.active.carousel-item');
-        const activeElementIndexes = [];
+        const activeElement = ele.querySelector('.active.carousel-item');
+        const activeElementIndex = this.getItemIndex(activeElement);
 
-        for (let i = 0; i < activeElements.length; i++) {
-            activeElementIndexes[i] = this.getItemIndex(activeElements[i]);
-        }
-
-        const nextElement = this.getItemByDirection(direction, activeElementIndexes);
+        const nextElement = this.getItemByDirection(direction, activeElementIndex);
 
         this.isSliding = true;
 
-        this.activateSlide(nextElement, (direction === 'prev') ? -1 : activeElements.length);
         if (direction === 'prev') {
-            for (let i = activeElements.length - 1; i >= 0; i--) {
-                this.positionSlide(activeElements[i], i + 1);
+            this.addPrev(nextElement, 1);
+            const reflow = nextElement.offsetWidth;
+
+            for (let i = activeElementIndex + this.visibleSlideCount - 1; i >= activeElementIndex; i--) {
+                this.transitionSlide(ele.children[i], 1);
             }
-            this.positionSlide(nextElement, 0);
+            this.transitionSlide(nextElement, 1);
         } else {
-            for (let i = 0; i < activeElements.length; i++) {
-                this.positionSlide(activeElements[i], i - 1);
+            this.addNext(nextElement, this.visibleSlideCount);
+            const reflow = nextElement.offsetWidth;
+
+            let count = 1;
+            for (let i = activeElementIndex; count <= this.visibleSlideCount; i = (i + 1) % ele.children.length) {
+                this.transitionSlide(ele.children[i], -1);
+                count++;
             }
-            this.positionSlide(nextElement, activeElements.length - 1);
+            this.transitionSlide(nextElement, -1);
         }
 
         setTimeout(() => {
             if (direction === 'prev') {
-                this.removeStyle(nextElement);
-                this.hideSlide(activeElements[activeElements.length - 1]);
+                this.unBlock(nextElement);
+                this.clearSyling(nextElement);
+                this.addActive(nextElement);
+
+                let firstTime = true;
+                for (let i = ele.children.length - 1; i >= 0; i--) {
+                    this.removeActive(ele.children[i]);
+                    this.unBlock(ele.children[i]);
+                    this.clearSyling(ele.children[i]);
+                    if (!firstTime) {
+                        this.addNext(ele.children[i], i + 1);
+                    }
+                    firstTime = false;
+                }
             } else {
-                this.removeStyle(activeElements[1]);
-                this.hideSlide(activeElements[0]);
+                const nextActiveElementIndex = (activeElementIndex + 1) % ele.children.length;
+                this.unBlock(ele.children[nextActiveElementIndex]);
+                this.clearSyling(ele.children[nextActiveElementIndex]);
+                this.addActive(ele.children[nextActiveElementIndex]);
+
+                this.removeActive(ele.children[activeElementIndex]);
+                this.clearSyling(ele.children[activeElementIndex]);
+
+                let count = 1;
+                for (let i = (activeElementIndex + 2) % ele.children.length;
+                     count < this.visibleSlideCount;
+                     i = (i + 1) % ele.children.length) {
+                    this.unBlock(ele.children[i]);
+                    this.clearSyling(ele.children[i]);
+                    this.addNext(ele.children[i], count);
+                    count++;
+                }
+                // this.unBlock(nextElement);
+                // this.clearSyling(nextElement);
+                // this.addNext(nextElement, this.visibleSlideCount - 1);
             }
             this.isSliding = false;
         }, 600);
     }
 
-    private getItemByDirection(direction: string, activeElementIndexes: Array<number>) {
+    private getItemByDirection(direction: string, activeElementIndex: number) {
         const ele = this.scrollerEl.nativeElement;
         const numItems = ele.children.length;
         const isNextDirection = direction === 'next';
         const isPrevDirection = direction === 'prev';
-        const activeIndex = isPrevDirection ? activeElementIndexes[0] : activeElementIndexes[activeElementIndexes.length - 1];
         const lastItemIndex = numItems - 1;
 
         // const isGoingToWrap = (isPrevDirection && activeIndex === 0) || (isNextDirection && activeIndex === lastItemIndex);
@@ -122,8 +169,8 @@ export class ResponsiveCarouselComponent implements OnInit, AfterContentChecked,
         //     return activeElement
         // }
 
-        const delta = direction === 'prev' ? -1 : 1;
-        const itemIndex = (activeIndex + delta) % numItems;
+        const delta = direction === 'prev' ? -1 : this.visibleSlideCount;
+        const itemIndex = (activeElementIndex + delta) % numItems;
 
         return itemIndex === -1 ? ele.children[numItems - 1] : ele.children[itemIndex];
     }
